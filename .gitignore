@@ -2,3 +2,4 @@
 /.spago
 /.purs-repl
 /output
+/.psci_modules
