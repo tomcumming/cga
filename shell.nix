@@ -9,6 +9,8 @@ pkgs.mkShellNoCC {
     purescript
     spago
 
+    esbuild
+
     nodePackages.purescript-language-server
     nodePackages.purs-tidy
   ];

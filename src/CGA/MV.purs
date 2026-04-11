@@ -56,10 +56,13 @@ instance (Show v, Ord v) => Show (MV v) where
     # intercalate " + "
     where
     goPair = case _ of
-      Tuple e (Additive 1.0)
-        | e == Element mempty -> "1"
-        | otherwise -> show e
-      Tuple e (Additive n) -> show n <> show e
+      Tuple e (Additive n) | e == Element mempty -> goNumber n
+      Tuple e (Additive n) -> goNumber n <> show e
+    goNumber = case _ of
+      1.0 -> "1"
+      (-1.0) -> "-1"
+      0.0 -> "0"
+      n -> show n
 
 scaleMV :: forall v. Number -> MV v -> MV v
 scaleMV k (MV mv) = map (unwrap >>> (k * _) >>> wrap) mv # MV
