@@ -68,7 +68,7 @@ scaleMV :: forall v. Number -> MV v -> MV v
 scaleMV k (MV mv) = map (unwrap >>> (k * _) >>> wrap) mv # MV
 
 powerset :: forall a. Ord a => S.Set a -> S.Set (S.Set a)
-powerset s = S.singleton s <> foldMap (\x -> S.delete x s # powerset) s
+powerset = foldr (\c p -> p <> S.map (S.insert c) p) (S.singleton mempty)
 
 mkElements :: forall v. BoundedEnum v => S.Set (Element v)
 mkElements = (enumFromTo bottom top :: Array _)
