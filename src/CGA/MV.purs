@@ -5,10 +5,15 @@ module CGA.MV
   , class CayleyTable
   , cayleyTable
   , Element
+  , fromVec
+  , elementGrade
   , MV
   , scaleMV
   , mkElements
   , mkCayleyTable
+  , reverse
+  , grade0
+  , restrict
   , class IntoMV
   , mv
   ) where
@@ -17,9 +22,10 @@ import Prelude
 
 import Data.Enum (class BoundedEnum, enumFromTo)
 import Data.Foldable (fold, foldMap, foldr, intercalate)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (odd, toNumber)
 import Data.Map as M
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid.Additive (Additive(Additive))
 import Data.Newtype (unwrap, wrap)
 import Data.Set as S
@@ -46,6 +52,12 @@ instance Show v => Show (Element v) where
   show (Element vs)
     | S.isEmpty vs = "1"
     | otherwise = foldMap show vs
+
+fromVec :: forall v. v -> Element v
+fromVec = S.singleton >>> Element
+
+elementGrade :: forall v. Element v -> Int
+elementGrade (Element e) = S.size e
 
 newtype MV v = MV (M.SemigroupMap (Element v) (Additive Number))
 
@@ -118,6 +130,23 @@ instance CayleyTable v => Semiring (MV v) where
       # fold
       # MV
       # simplify
+
+reverse :: forall v. MV v -> MV v
+reverse (MV m) = mapWithIndex go m # MV
+  where
+  go e = unwrap
+    >>> (_ * if mod (elementGrade e) 4 > 1 then -1.0 else 1.0)
+    >>> wrap
+
+grade0 :: forall v. BasisVec v => MV v -> Number
+grade0 (MV m) = M.lookup (Element mempty) (unwrap m) # maybe 0.0 unwrap
+
+-- | Project out the selected elements
+restrict :: forall v. BasisVec v => S.Set (Element v) -> MV v -> MV v
+restrict es (MV m) = unwrap m # M.filterKeys (\v -> S.member v es) # wrap # MV
+
+instance CayleyTable v => Ring (MV v) where
+  sub x = scaleMV (-1.0) >>> add x
 
 class BasisVec v <= IntoMV v a where
   mv :: a -> MV v
